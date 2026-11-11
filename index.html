@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1424">
+<meta name="description" content="AM Trade Bot Pro — trend-following paper trading simulator">
+<link rel="manifest" href="manifest.webmanifest">
+<title>AM Trade Bot Pro v2</title>
+<style>
+:root{--bg:#09111f;--panel:#111e30;--panel2:#17263b;--line:#293c55;--text:#f2f6fc;--muted:#9aabc1;--green:#35d6a0;--red:#ff7185;--blue:#69a8ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#14253d 0,#09111f 60%);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,Arial}
+.wrap{max-width:1180px;margin:auto;padding:22px}.top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+h1{font-size:25px;letter-spacing:.3px;margin:0}.sub,.muted{color:var(--muted)}.tag{font-size:11px;padding:6px 10px;border-radius:20px;border:1px solid #236b56;color:var(--green)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.card{background:linear-gradient(145deg,var(--panel),#101a2a);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0}
+.label{font-size:12px;color:var(--muted)}.metric{font-size:24px;font-weight:750;margin-top:5px}.layout{display:grid;grid-template-columns:1.25fr .75fr;gap:12px}
+h2{font-size:16px;margin:0 0 12px}.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+button,select{background:#223651;color:white;border:1px solid #3a5272;border-radius:10px;padding:10px 13px;font:inherit}button{cursor:pointer}button.primary{background:#087e60;border-color:#087e60}button.stop{background:#542638;border-color:#79394e}button:disabled{opacity:.45;cursor:not-allowed}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:10px 7px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:600}
+.good{color:var(--green)}.bad{color:var(--red)}.notice{font-size:12px;line-height:1.55;color:#c5d2e2;background:#192a40;padding:12px;border-radius:10px;margin-top:14px}
+.settings{display:grid;grid-template-columns:1fr 1fr;gap:10px}.setting{background:var(--panel2);padding:10px;border-radius:10px}.setting b{display:block;margin-top:4px}
+.chart{width:100%;height:185px;display:block;background:#0b1627;border:1px solid var(--line);border-radius:12px}
+.small{font-size:12px;line-height:1.6}.status{margin-top:12px;padding:9px 11px;border-radius:9px;background:#1b2a3d;font-size:12px}
+footer{text-align:center;color:var(--muted);font-size:11px;margin:20px 0}
+@media(max-width:760px){.grid{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}.wrap{padding:13px}.metric{font-size:21px}.settings{grid-template-columns:1fr 1fr}}
+@media(max-width:420px){.settings{grid-template-columns:1fr}.card{padding:13px}}
+</style>
+</head>
+<body><main class="wrap">
+<header class="top"><div><h1>AM TRADE BOT PRO</h1><div class="sub">Version 2.0 · Trend-following paper trader</div></div><span class="tag">● DEMO MODE ONLY</span></header>
+<section class="grid">
+ <div class="card"><div class="label">Demo account balance</div><div class="metric" id="balance">R10,000.00</div></div>
+ <div class="card"><div class="label">Open positions</div><div class="metric" id="openCount">0 / 2</div></div>
+ <div class="card"><div class="label">Closed trades</div><div class="metric" id="closedCount">0</div></div>
+ <div class="card"><div class="label">Net demo P/L</div><div class="metric" id="netPnl">R0.00</div></div>
+</section>
+<div class="layout">
+ <section class="card">
+  <h2>Market watch · Forex + Crypto</h2>
+  <table><thead><tr><th>Market</th><th>Simulated price</th><th>Trend</th><th>Signal</th></tr></thead><tbody id="markets"></tbody></table>
+  <div style="height:12px"></div><h2>Selected market trend</h2>
+  <select id="chartMarket" aria-label="Choose market"></select>
+  <canvas class="chart" id="chart" width="900" height="260"></canvas>
+  <div class="controls"><button class="primary" id="start">Start demo bot</button><button class="stop" id="pause" disabled>Pause bot</button><button id="reset">Reset account</button></div>
+  <div class="status" id="status">Bot paused. No trades will be opened.</div>
+ </section>
+ <section class="card">
+  <h2>Strategy & risk settings</h2>
+  <div class="settings">
+   <div class="setting"><span class="label">Strategy</span><b>EMA 9 / EMA 21 trend</b></div>
+   <div class="setting"><span class="label">Risk per trade</span><b>1% of demo balance</b></div>
+   <div class="setting"><span class="label">Stop-loss</span><b>2% price move</b></div>
+   <div class="setting"><span class="label">Take-profit</span><b>4% price move</b></div>
+   <div class="setting"><span class="label">Maximum positions</span><b>2 at a time</b></div>
+   <div class="setting"><span class="label">Markets</span><b>Forex + Crypto</b></div>
+  </div>
+  <p class="small muted">The bot looks for a fast EMA crossing above the slow EMA (BUY) or below it (SELL). Signals are educational and based on generated demo prices.</p>
+  <div class="notice"><b>Important:</b> This version uses simulated prices and virtual money only. It does not connect to an exchange or broker, and cannot place real orders. Results do not predict real-market performance.</div>
+ </section>
+</div>
+<section class="card" style="margin-top:12px"><h2>Open demo positions</h2>
+<table><thead><tr><th>Market</th><th>Side</th><th>Entry</th><th>Live demo P/L</th><th>Stop / target</th></tr></thead><tbody id="positions"><tr><td colspan="5" class="muted">No open positions.</td></tr></tbody></table></section>
+<section class="card" style="margin-top:12px"><h2>Trade journal</h2>
+<table><thead><tr><th>Market</th><th>Side</th><th>Exit reason</th><th>Demo P/L</th><th>Balance after</th></tr></thead><tbody id="history"><tr><td colspan="5" class="muted">No completed demo trades yet.</td></tr></tbody></table></section>
+<footer>AM TRADE BOT PRO v2 · Runs locally in your browser · Demo only</footer>
+</main>
+<script>
+const initial=[
+ {name:"EUR/USD",kind:"Forex",price:1.0820,seed:1.0820,series:[]},
+ {name:"GBP/USD",kind:"Forex",price:1.2710,seed:1.2710,series:[]},
+ {name:"USD/JPY",kind:"Forex",price:149.20,seed:149.20,series:[]},
+ {name:"BTC/USD",kind:"Crypto",price:68000,seed:68000,series:[]},
+ {name:"ETH/USD",kind:"Crypto",price:3550,seed:3550,series:[]},
+ {name:"SOL/USD",kind:"Crypto",price:158,seed:158,series:[]}
+];
+let markets=initial.map(x=>({...x,series:[x.price]})),balance=10000,net=0,positions=[],history=[],running=false,clock=null,tick=0;
+const $=id=>document.getElementById(id),money=n=>"R"+n.toLocaleString("en-ZA",{minimumFractionDigits:2,maximumFractionDigits:2});
+function ema(data,period){if(!data.length)return 0;let k=2/(period+1),v=data[0];for(let i=1;i<data.length;i++)v=data[i]*k+v*(1-k);return v}
+function signal(m){if(m.series.length<22)return "Warming up";let a=ema(m.series.slice(-40),9),b=ema(m.series.slice(-60),21);return a>b*1.00005?"BUY":a<b*.99995?"SELL":"WAIT"}
+function trend(m){if(m.series.length<10)return "—";return ema(m.series.slice(-30),9)>ema(m.series.slice(-50),21)?"Uptrend":"Downtrend"}
+function fmtPrice(m){return m.price.toLocaleString("en-US",{maximumFractionDigits:m.kind==="Forex"?5:2})}
+function render(){
+ $("balance").textContent=money(balance);$("openCount").textContent=positions.length+" / 2";$("closedCount").textContent=history.length;
+ $("netPnl").textContent=money(net);$("netPnl").className="metric "+(net>=0?"good":"bad");
+ $("markets").innerHTML=markets.map(m=>{let s=signal(m);return `<tr><td>${m.name}<br><span class="label">${m.kind}</span></td><td>${fmtPrice(m)}</td><td>${trend(m)}</td><td class="${s==="BUY"?"good":s==="SELL"?"bad":""}">${s}</td></tr>`}).join("");
+ $("positions").innerHTML=positions.length?positions.map(p=>{let m=markets.find(x=>x.name===p.name),move=(m.price-p.entry)/p.entry*(p.side==="BUY"?1:-1),pl=p.riskCash*move/.02;return `<tr><td>${p.name}</td><td>${p.side}</td><td>${p.entry.toPrecision(7)}</td><td class="${pl>=0?"good":"bad"}">${money(pl)}</td><td>2% / 4%</td></tr>`}).join(""):`<tr><td colspan="5" class="muted">No open positions.</td></tr>`;
+ $("history").innerHTML=history.length?history.slice(-15).reverse().map(h=>`<tr><td>${h.name}</td><td>${h.side}</td><td>${h.reason}</td><td class="${h.pl>=0?"good":"bad"}">${money(h.pl)}</td><td>${money(h.balance)}</td></tr>`).join(""):`<tr><td colspan="5" class="muted">No completed demo trades yet.</td></tr>`;
+ $("start").disabled=running;$("pause").disabled=!running;drawChart();
+}
+function closeTrade(i,reason){
+ let p=positions[i],m=markets.find(x=>x.name===p.name),move=(m.price-p.entry)/p.entry*(p.side==="BUY"?1:-1);
+ // RiskCash is the planned loss at the 2% stop; profit/loss scales with the price move.
+ let pl=p.riskCash*(move/.02);balance+=pl;net+=pl;history.push({name:p.name,side:p.side,reason,pl,balance});positions.splice(i,1);
+}
+function openTrade(m,side){
+ if(positions.length>=2||positions.some(p=>p.name===m.name))return;
+ let riskCash=balance*.01;
+ positions.push({name:m.name,side,entry:m.price,riskCash});
+}
+function step(){
+ tick++;
+ markets.forEach((m,i)=>{
+  // Deterministic mixed drift + small random noise for a self-contained demo feed.
+  let wave=Math.sin((tick+i*7)/11)*.00065+Math.sin((tick+i*3)/27)*.00035;
+  let noise=(Math.random()-.5)* (m.kind==="Crypto"?.0022:.0008);
+  m.price=Math.max(m.seed*.2,m.price*(1+wave+noise));m.series.push(m.price);if(m.series.length>120)m.series.shift();
+ });
+ for(let i=positions.length-1;i>=0;i--){
+  let p=positions[i],m=markets.find(x=>x.name===p.name),move=(m.price-p.entry)/p.entry*(p.side==="BUY"?1:-1);
+  if(move<=-.02)closeTrade(i,"Stop-loss");else if(move>=.04)closeTrade(i,"Take-profit");
+ }
+ // Only enter when a fresh EMA crossover is detected from recent samples.
+ if(positions.length<2 && tick%3===0){
+  markets.forEach(m=>{
+   if(positions.length>=2||positions.some(p=>p.name===m.name)||m.series.length<24)return;
+   let prev=m.series.slice(0,-1),fastNow=ema(m.series.slice(-40),9),slowNow=ema(m.series.slice(-60),21);
+   let fastPrev=ema(prev.slice(-40),9),slowPrev=ema(prev.slice(-60),21);
+   if(fastPrev<=slowPrev && fastNow>slowNow)openTrade(m,"BUY");
+   else if(fastPrev>=slowPrev && fastNow<slowNow)openTrade(m,"SELL");
+  });
+ }
+ render();
+}
+function drawChart(){
+ let c=$("chart"),ctx=c.getContext("2d"),m=markets.find(x=>x.name===$("chartMarket").value)||markets[0],d=m.series.slice(-65);
+ ctx.clearRect(0,0,c.width,c.height);if(d.length<2)return;
+ let lo=Math.min(...d),hi=Math.max(...d),pad=(hi-lo)*.12||.0001;lo-=pad;hi+=pad;
+ ctx.strokeStyle="#263b55";ctx.lineWidth=1;
+ for(let j=1;j<5;j++){let y=j*c.height/5;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(c.width,y);ctx.stroke()}
+ ctx.strokeStyle="#54b8ff";ctx.lineWidth=3;ctx.beginPath();
+ d.forEach((v,i)=>{let x=i*c.width/(d.length-1),y=c.height-18-(v-lo)/(hi-lo)*(c.height-36);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();
+ ctx.fillStyle="#9aabc1";ctx.font="16px system-ui";ctx.fillText(m.name+" · simulated",14,22);
+}
+$("chartMarket").innerHTML=markets.map(m=>`<option>${m.name}</option>`).join("");$("chartMarket").addEventListener("change",drawChart);
+$("start").onclick=()=>{if(!running){running=true;$("status").textContent="Running: monitoring EMA 9/21 trend signals in demo mode.";clock=setInterval(step,1200);render()}};
+$("pause").onclick=()=>{running=false;clearInterval(clock);$("status").textContent="Paused. Existing demo positions remain open.";render()};
+$("reset").onclick=()=>{clearInterval(clock);running=false;balance=10000;net=0;positions=[];history=[];tick=0;markets=initial.map(x=>({...x,series:[x.seed]}));$("status").textContent="Demo account reset. Bot paused.";render()};
+if("serviceWorker"in navigator)addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+render();
+</script>
+</body></html>
